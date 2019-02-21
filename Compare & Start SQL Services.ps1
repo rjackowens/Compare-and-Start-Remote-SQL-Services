@@ -1,4 +1,4 @@
-﻿# This is a list of all servers we're pulling service info from
+# ﻿This is a list of all servers we're pulling service info from
 $ServersOutput = Get-ADComputer -Filter * | Select-Object -Property DNSHostName | Sort-Object -Property DNSHostName
 
 # Specifies Local Folder Location to Save Lists 
@@ -7,7 +7,22 @@ $CurrentListPath = "C:\Users\" + $env:username + "\Documents\currentlist.csv"
 
 $SaveStatusPrompt = Read-Host "Do you want to save the status of all current SQL services to masterlist? Enter Y or N"
 
+# Checks if Master List already exists
+$ListExists = Test-Path -Path $MasterListPath
+
+if ($ListExists -eq $true -and $SaveStatusPrompt.ToUpper() -ne "N") {
+
+    $ContinuePrompt = Read-Host "A masterlist.csv file already exists. Do you want to overwrite this file? Enter Y or N"
+
+        if ($ContinuePrompt.ToUpper() -ne "Y") {
+
+            break 
+        }         
+}
+
 if ($SaveStatusPrompt.ToUpper() -eq "Y") {
+
+    Write-Host "`nCreating Master List..." -ForegroundColor Green
 
     # Saves all Master SQL Service Info to masterlist.csv 
     $GetMasterList = $ServersOutput.DNSHostName | ForEach-Object {
@@ -20,6 +35,8 @@ if ($SaveStatusPrompt.ToUpper() -eq "Y") {
 }
 
 # Saves all current SQL Service Info to currentlist.csv
+Write-Host "`nCreating Master List..." -ForegroundColor Green
+
 $GetCurrentList = $ServersOutput.DNSHostName | ForEach-Object {
 
     Get-Service -ComputerName $_ -Exclude "MSSQLServerADHelper100" | Where-Object ({$_.DisplayName -Like '*SQL*' -OR $_.Name -Like '*MSDTC*'}) | Select-Object DisplayName, MachineName, Status
